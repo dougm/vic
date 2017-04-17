@@ -11,7 +11,7 @@ repository.
 ```
 % export GOPATH=$HOME/gopath
 % go get github.com/vmware/vic/cmd/vcsim
-% $GOPATH/vcsim -h
+% $GOPATH/bin/vcsim -h
 ```
 
 ## Usage
