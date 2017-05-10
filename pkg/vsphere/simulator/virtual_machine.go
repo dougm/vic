@@ -515,3 +515,38 @@ func (vm *VirtualMachine) UnregisterVM(c *types.UnregisterVM) soap.HasFault {
 
 	return r
 }
+
+func (vm *VirtualMachine) CloneVMTask(req *types.CloneVM_Task) soap.HasFault {
+	task := CreateTask(vm, "cloneVm", func(t *Task) (types.AnyType, types.BaseMethodFault) {
+		folder := Map.Get(req.Folder).(*Folder)
+
+		config := types.VirtualMachineConfigSpec{
+			Name:    req.Name,
+			GuestId: vm.Config.GuestId,
+			Files: &types.VirtualMachineFileInfo{
+				VmPathName: strings.Replace(vm.Config.Files.VmPathName, vm.Name, req.Name, -1),
+			},
+		}
+
+		res := folder.CreateVMTask(&types.CreateVM_Task{
+			This:   folder.Self,
+			Config: config,
+			Pool:   *vm.ResourcePool,
+		})
+
+		ctask := Map.Get(res.(*methods.CreateVM_TaskBody).Res.Returnval).(*Task)
+		if ctask.Info.Error != nil {
+			return nil, ctask.Info.Error.Fault
+		}
+
+		return ctask.Info.Result.(types.ManagedObjectReference), nil
+	})
+
+	task.Run()
+
+	return &methods.CloneVM_TaskBody{
+		Res: &types.CloneVM_TaskResponse{
+			Returnval: task.Self,
+		},
+	}
+}
